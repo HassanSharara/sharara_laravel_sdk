@@ -10,7 +10,6 @@ void main()async{
   runApp( const FirstScreen());
 }
 
-
 class FirstScreen extends StatelessWidget {
   const FirstScreen({super.key});
 
