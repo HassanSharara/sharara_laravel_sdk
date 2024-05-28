@@ -8,13 +8,12 @@ abstract class GeneralModelsJsonSerializer {
     jsonParsedMap = parsed;
   }
   Map? jsonParsedMap;
-  V? get<V>(final dynamic key){
+  B? get<B>(final dynamic key){
     if(jsonParsedMap==null)return null;
     final dynamic v = jsonParsedMap![key];
-    if(key is! V)return null;
     return v;
   }
-  void buildModelObjects();
+  void buildModelProperties();
 }
 
 
@@ -27,7 +26,7 @@ abstract class GeneralLaravelModel<T> extends GeneralModelsJsonSerializer {
   }
   void rebuildModel(){
     buildTimestampObjects();
-    buildModelObjects();
+    buildModelProperties();
   }
   RTime? createdAt,updatedAt;
   void updateModelMapByKV([final Map? data]){

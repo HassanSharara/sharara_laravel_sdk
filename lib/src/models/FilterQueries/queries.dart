@@ -1,11 +1,26 @@
 
+import 'package:flutter/cupertino.dart';
+import 'package:sharara_laravel_sdk/sharara_laravel_sdk.dart';
 
 class LaravelFilter {
   final String name;
-  final LaravelFilterQuery query;
-  const LaravelFilter({required this.name,required this.query});
+  final LaravelQueryBuilder query;
+ bool active;
+ LaravelFilter({required this.name,required this.query,this.active = false});
 }
- class LaravelFilterQuery<T,V> {
+class LaravelSearchFilter {
+  final TextEditingController controller = TextEditingController();
+  TextInputType type;
+  LaravelFilter filter;
+  final String column;
+  final Function(String)? onValueSearched;
+  LaravelSearchFilter({
+    required this.column,
+    required this.filter,
+    this.onValueSearched,
+    this.type  = TextInputType.name});
+}
+class LaravelFilterQuery<T,V> {
   final LaravelQueryClosure closure;
   final String? column,middleAction;
   V? value;
@@ -25,13 +40,14 @@ class LaravelFilter {
           "root":{
             "column":column,
             if(value!=null)"value":value,
-            "middleAction":middleAction??"="
+            "middleAction":middleAction??"=",
+            if(extraBuilder is List<LaravelQueryBuilder> && (extraBuilder as List).isNotEmpty)
+              "children":[
+                ...(extraBuilder as List<LaravelQueryBuilder>)
+                    .map((e)=>e.results)
+              ]
           },
-          if(extraBuilder is List<LaravelQueryBuilder> && (extraBuilder as List).isNotEmpty)
-            "children":[
-            if(extraBuilder is List<LaravelQueryBuilder>)...(extraBuilder as List<LaravelQueryBuilder>)
-                .map((e)=>e.results)
-          ]
+
         };
         break;
 
@@ -40,7 +56,12 @@ class LaravelFilter {
         result[closure.name] ={
           "root":{
             "column":column,
-            "value":value
+            "value":value,
+            if(extraBuilder is List<LaravelQueryBuilder> && (extraBuilder as List).isNotEmpty)
+              "children":[
+                ...(extraBuilder as List<LaravelQueryBuilder>)
+                    .map((e)=>e.results)
+              ]
           }
         };
         break;
@@ -48,13 +69,14 @@ class LaravelFilter {
         result[closure.name]={
           "root":{
             "column":column,
+            if(extraBuilder is List<LaravelQueryBuilder> && (extraBuilder as List).isNotEmpty)
+              "children":[
+                if(extraBuilder is List<LaravelQueryBuilder>)
+                  ...(extraBuilder as List<LaravelQueryBuilder>)
+                      .map((e)=>e.results)
+              ]
           },
-          if(extraBuilder is List<LaravelQueryBuilder> && (extraBuilder as List).isNotEmpty)
-          "children":[
-            if(extraBuilder is List<LaravelQueryBuilder>)
-              ...(extraBuilder as List<LaravelQueryBuilder>)
-                .map((e)=>e.results)
-          ]
+
         };
         break;
 
@@ -78,7 +100,28 @@ class LaravelFilter {
         break;
 
 
-      case LaravelQueryClosure.withRelation || LaravelQueryClosure.select || LaravelQueryClosure.groupBy:
+      case LaravelQueryClosure.whereHas:
+        result[closure.name] = {
+          "root":{
+            if(value!=null)"value":value,
+            if(extraBuilder is List<LaravelQueryBuilder> && (extraBuilder as List).isNotEmpty)
+              "children":[
+                ...(extraBuilder as List<LaravelQueryBuilder>).map((e) => e.results)
+              ]
+          }
+        };
+      case LaravelQueryClosure.withRelation:
+        result[closure.name] = {
+          "root":{
+            if(value!=null)"value":value,
+            if(extraBuilder is List<LaravelQueryBuilder> && (extraBuilder as List).isNotEmpty)
+              "children":[
+                ...(extraBuilder as List<LaravelQueryBuilder>).map((e) => e.results)
+              ]
+          }
+        };
+        break;
+      case  LaravelQueryClosure.select || LaravelQueryClosure.groupBy:
         result[closure.name] = {
           "root":{
             "value":[
@@ -92,7 +135,7 @@ class LaravelFilter {
         break;
 
       default:
-      break;
+        break;
     }
     return result;
   }
@@ -107,7 +150,7 @@ class LaravelFilter {
   int get hashCode => super.hashCode + 10;
 
 }
- enum LaravelQueryClosure {
+enum LaravelQueryClosure {
   where,
   whereIn,
   distinct,
@@ -117,11 +160,10 @@ class LaravelFilter {
   orderBy,
   orWhere,
   withRelation,
+  whereHas,
   select,
   groupBy,
 }
-
-
 extension QuerySet on Set {
   push<T>(final T value){
     removeWhere((element) => element == value);
@@ -131,28 +173,49 @@ extension QuerySet on Set {
 class LaravelQueryBuilder {
   final Set<LaravelFilterQuery> filters = {};
   static LaravelQueryBuilder get create => LaravelQueryBuilder();
+  LaravelQueryBuilder get clear {
+    filters.clear();
+    return this;
+  }
+  LaravelQueryBuilder search(final String column,final String value,{
+    final List<LaravelQueryBuilder>? insideConditions,
+  })=> where(column,value:"%$value%",middleAction:"like");
+
   LaravelQueryBuilder where(final String column,{final String? value,middleAction,
-  final List<LaravelQueryBuilder>? insideConditions,
+    final List<LaravelQueryBuilder>? insideConditions,
   }){
     filters.push(
         LaravelFilterQuery(closure:LaravelQueryClosure.where,
-          column:column,
-          middleAction:middleAction,
-          value:value,
-          extraBuilder:insideConditions
+            column:column,
+            middleAction:middleAction,
+            value:value,
+            extraBuilder:insideConditions
+        )
+    );
+    return this;
+  }
+
+  LaravelQueryBuilder whereHas({final String? value,
+    final List<LaravelQueryBuilder>? insideConditions,
+  }){
+    filters.push(
+        LaravelFilterQuery(
+            closure:LaravelQueryClosure.whereHas,
+            value:value,
+            extraBuilder:insideConditions
         )
     );
     return this;
   }
   LaravelQueryBuilder having(final String column,{final String? value,middleAction,
-  final List<LaravelQueryBuilder>? insideConditions,
+    final List<LaravelQueryBuilder>? insideConditions,
   }){
     filters.push(
         LaravelFilterQuery(closure:LaravelQueryClosure.having,
-          column:column,
-          middleAction:middleAction,
-          value:value,
-          extraBuilder:insideConditions
+            column:column,
+            middleAction:middleAction,
+            value:value,
+            extraBuilder:insideConditions
         )
     );
     return this;
@@ -172,9 +235,9 @@ class LaravelQueryBuilder {
     return this;
   }
 
-  LaravelQueryBuilder whereNull(final String column,{final String? value,middleAction,
+  LaravelQueryBuilder whereNull(final String column,{
     final List<LaravelQueryBuilder>? insideConditions,
-  }){
+   }){
     filters.push(
         LaravelFilterQuery(closure:LaravelQueryClosure.whereNull,
             column:column,
@@ -184,8 +247,9 @@ class LaravelQueryBuilder {
     return this;
   }
 
-  LaravelQueryBuilder whereIn(final String column,{final dynamic values,middleAction,
-    final List<LaravelQueryBuilder>? insideConditions,
+  LaravelQueryBuilder whereIn(
+      final String column,{final dynamic values,middleAction,
+      final List<LaravelQueryBuilder>? insideConditions,
   }){
     filters.push(
         LaravelFilterQuery(closure:LaravelQueryClosure.whereIn,
@@ -197,7 +261,7 @@ class LaravelQueryBuilder {
     return this;
   }
 
-  LaravelQueryBuilder whereNotNull(final String column,{final String? value,middleAction,
+  LaravelQueryBuilder whereNotNull(final String column,{
     final List<LaravelQueryBuilder>? insideConditions,
   }){
     filters.push(
@@ -236,6 +300,9 @@ class LaravelQueryBuilder {
   }
 
 
+  operator+(final LaravelQueryBuilder builder){
+    filters.addAll(builder.filters);
+  }
   Map get results {
     final Map result = {};
     for(final closure in LaravelQueryClosure.values){

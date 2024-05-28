@@ -12,6 +12,7 @@ class LaravelLoadingFrameBuilder extends StatelessWidget {
   final Widget child;
   @override
   Widget build(BuildContext context) {
+    final Size size = MediaQuery.of(context).size;
     return Stack(
       children: [
         child,
@@ -19,9 +20,11 @@ class LaravelLoadingFrameBuilder extends StatelessWidget {
             child:const SizedBox(),
             builder:(BuildContext context,final bool isLoading,_){
              if(!isLoading)return _!;
-             return const Positioned(
-               bottom:15,
-               child: LinearProgressIndicator(),
+             return  Align(
+               alignment:const Alignment(0,0.95),
+               child: SizedBox(
+                   width:size.width,
+                   child:const LinearProgressIndicator()),
              );
             })
       ],
