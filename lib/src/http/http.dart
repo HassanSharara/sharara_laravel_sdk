@@ -8,13 +8,15 @@ import 'package:sharara_laravel_sdk/src/models/Response/laravel_response.dart';
 class LaravelHttp extends ShararaHttp {
   static final LaravelHttp instance = LaravelHttp().._init();
   Future<void> Function(LaravelResponse)? onLaravelResponse;
+
+
   _init(){
     onResponseReady = <T>(Response response)async{
       final LaravelResponse? laravelResponse = FunctionHelpers
           .tryCatch<LaravelResponse>(() => LaravelResponse
           .fromJson(json.decode(
           json.encode(response.data)
-      )));
+          )));
       if(laravelResponse==null)return null;
       if(laravelResponse.hasToast)FunctionHelpers.toast(laravelResponse.toast!,status:laravelResponse.isSuccess);
       if(onLaravelResponse!=null)onLaravelResponse!(laravelResponse);
