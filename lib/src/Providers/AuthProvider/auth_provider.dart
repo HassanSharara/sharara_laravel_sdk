@@ -1,20 +1,27 @@
 
 
 import 'package:flutter/foundation.dart';
-import 'package:sharara_apps_building_helpers/sharara_apps_building_helpers.dart';
+import 'package:sharara_laravel_sdk/sharara_laravel_sdk.dart';
 import 'package:sharara_laravel_sdk/src/Providers/AuthProvider/cache.dart';
-import 'package:sharara_laravel_sdk/src/models/Auth/user.dart';
 import 'package:sharara_laravel_sdk/src/models/Response/laravel_response.dart';
 
 class AuthProvider<U extends AuthUser> {
   final U Function(dynamic) builder;
   AuthProvider(this.builder);
+  factory AuthProvider.nativeOne()=> AuthProvider(
+      (j)=> AuthUser.fromJson(j) as U
+  );
+  static AuthProvider instance = AuthProvider.nativeOne();
+
+  static void signNewAuthProvider(AuthProvider provider)=> instance = provider;
+
   final ValueNotifier<U?> userNotifier = ValueNotifier(null);
   final AuthProviderCache cache =AuthProviderCache();
 
   init(){
     _fromCache();
   }
+
 
   _fromCache(){
     _changeUserObjectByDynamic(cache.get(),callSaver:false);

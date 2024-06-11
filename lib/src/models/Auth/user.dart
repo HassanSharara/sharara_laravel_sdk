@@ -11,7 +11,7 @@ class AuthUser extends GeneralLaravelModel{
     name = get('name');
     phone = get('phone');
     email = get('email');
-    fcmToken = get('fcm_token');
+    fcmToken = get('fcm');
   }
 
 

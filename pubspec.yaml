@@ -1,5 +1,5 @@
 name: sharara_laravel_sdk
-version: 0.0.1
+version: 0.0.3
 description: "A new sharara package to make developing more easy and efficient."
 homepage: https://github.com/HassanSharara
 repository: https://github.com/HassanSharara/sharara_laravel_sdk
@@ -10,7 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  sharara_apps_building_helpers: ^1.1.35
+  sharara_apps_building_helpers: ^1.1.38
 
 dev_dependencies:
   flutter_test:

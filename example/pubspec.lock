@@ -340,17 +340,17 @@ packages:
     dependency: transitive
     description:
       name: sharara_apps_building_helpers
-      sha256: "82b469c23855383ec9392e7ffdf32e978bdf3868926bc7363ec17eaf674f815f"
+      sha256: "99dea0f97874dcc06865e19e69f3253c073e4b0dfa306da9d0c6a86061da3a0b"
       url: "https://pub.dev"
     source: hosted
-    version: "1.1.35"
+    version: "1.1.38"
   sharara_laravel_sdk:
     dependency: "direct main"
     description:
       path: ".."
       relative: true
     source: path
-    version: "0.0.1"
+    version: "0.0.3"
   sky_engine:
     dependency: transitive
     description: flutter

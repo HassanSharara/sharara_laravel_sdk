@@ -6,13 +6,18 @@ import 'package:sharara_laravel_sdk/src/Ui/LIBuilder/li_builder.dart';
 
 class LaravelDefaultAuthScreen extends StatefulWidget {
   const LaravelDefaultAuthScreen({super.key});
-
   @override
   State<LaravelDefaultAuthScreen> createState() => _AuthScreenState();
 }
 
 class _AuthScreenState extends State<LaravelDefaultAuthScreen> {
   final AuthHandler authHandler = AuthHandler();
+
+  @override
+  void dispose() {
+    authHandler.dispose(context);
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -20,6 +25,10 @@ class _AuthScreenState extends State<LaravelDefaultAuthScreen> {
       onPopInvoked:(_){
         if(_)return;
         if(authHandler.screenAuthType.value!=null){
+          if(authHandler.screenAuthType.value==AuthType.forget){
+            authHandler.changeAuthScreen(AuthType.login);
+            return;
+          }
           authHandler.changeAuthScreen();
           return;
         }
@@ -85,11 +94,20 @@ class _AuthScreenState extends State<LaravelDefaultAuthScreen> {
                                ),
                              )
                          ),
+                         const SizedBox(height:15,),
+                         if(authType==AuthType.login)
+                           GestureDetector(
+                             onTap:()=>authHandler.changeAuthScreen(AuthType.forget),
+                             child: Text("هل نسيت كلمة السر ؟",style:TextStyle(
+                               color:RoyalColors.mainAppColor,
+                               fontWeight:FontWeight.bold
+                             ),),
+                           ),
                          const SizedBox(height:25,),
 
                          RoyalRoundedButton(
                            title: "تقدم",
-                           onPressed:()=>authHandler.callApi(context),
+                           onPressed:authHandler.callApi,
                          )
                        ]
                       ,
@@ -146,7 +164,7 @@ class _PhoneTextEditorState extends State<PhoneTextEditor> {
            if(t.text.isEmpty)return _!;
            return Column(
                children:[
-                 if(widget.authHandler.isRegisterScreen)...[
+                 if(widget.authHandler.numberNeedToBeVerified)...[
 
                    const SizedBox(height:5,),
                    const Text("يرجى توثيق رقم الهاتف"),

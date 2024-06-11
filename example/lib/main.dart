@@ -24,7 +24,7 @@ void main()async{
           fromPhoneNumberId: WhatsAppApiConstans.fromNumId.toString()
         ),
         appName: "test",
-        appLogo:RoyalShadowContainer(
+        appLogo:()=>RoyalShadowContainer(
           backgroundColor:RoyalColors.mainAppColor,
           child:const Text("LOGO",style:TextStyle(color:RoyalColors.white),),
         ),
@@ -37,9 +37,10 @@ void main()async{
     "Authorization":"Bearer ${Api.apiKey}"
   };
   runApp(
-      ShararaAppHelper(builder:
+      LaravelAppBuilder(builder:
       (_)=>const FirstScreen()
-  ) );
+  )
+  );
 }
 
 class FirstScreen extends StatefulWidget {
@@ -71,8 +72,29 @@ class _FirstScreenState extends State<FirstScreen> {
           , child:const Text("فلترة")),
 
           ElevatedButton(onPressed:(){
+
+
             FunctionHelpers
-            .jumpTo(context,const LaravelDefaultAuthScreen());
+            .jumpTo(context,
+             RequiredAuthScreen<AuthUser>(
+               userBuilder:(BuildContext context,final user){
+                 return Column(
+                   mainAxisAlignment:MainAxisAlignment.center,
+                   crossAxisAlignment:CrossAxisAlignment.center,
+                   children: [
+                     Center(
+                       child: Text(user.name??""),
+                     ),
+                     const SizedBox(height:16,),
+                     RoyalRoundedButton(
+                       title:"logout",
+                       onPressed:()=>AuthProvider.instance.logout(),
+                     )
+                   ],
+                 );
+               },
+             )
+            );
           },
          child:const Text("انشاء حساب")),
         ],
