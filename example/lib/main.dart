@@ -6,11 +6,7 @@ import 'package:sharara_laravel_sdk/http.dart';
 import 'package:sharara_laravel_sdk/ui.dart';
 
 
-class WhatsAppApiConstans {
-  static const String templateName = "swia_auth";
-  static const String accessToken = "EAAMpxfZBIDlwBO4BOlSDX28BofQadZAB2WF2sES3JtvozUqAI9p0eIAFZC41IZAJE4MSGZCcQb5w74RrS6rf6LdP41UreJpTiOKTRZBs70SI9E21LNQZB7qRB1vHDtJ72ZB11u72p9wgnXCTY7N7UAjZB3NggXpN8pmDWrQEFAsFD0epHGTpqSo9XBPa3Kt1BaBL4VslnmU2Tu4pC";
-  static const int fromNumId = 140455345827741;
-}
+
 
 void main()async{
   WidgetsFlutterBinding.ensureInitialized();
