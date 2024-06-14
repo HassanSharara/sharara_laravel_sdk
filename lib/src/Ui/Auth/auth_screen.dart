@@ -179,7 +179,13 @@ class _PhoneTextEditorState extends State<PhoneTextEditor> {
                                foregroundColor:WidgetStateProperty.resolveWith((_)=>RoyalColors.red)
                            ),
                            onPressed:(){
-
+                             FunctionHelpers.jumpTo(context,
+                              FbPhoneAuthScreen(
+                                  phoneNumber: phoneNumber,
+                                  onVerificationSucceed:(v){
+                                    _onPhoneVerificationCallback();
+                                  })
+                             );
                            },
                            child:const Text("عبر ارسال رسالة نصية"),
                          ),
@@ -196,12 +202,7 @@ class _PhoneTextEditorState extends State<PhoneTextEditor> {
                              WhatsAppAuthenticator(
                                  appAuthor: LaravelConfigurations.configurations!.whatsAppAuthor!,
                                  toPhoneNumber: phoneNumber,
-                                 onSuccess: ()async{
-                                 setState(() {
-                                   widget.model.verifiedNumber = phoneNumber;
-                                 });
-                                 FunctionHelpers.toast("تم التحقق",status:true);
-                                 })
+                                 onSuccess:_onPhoneVerificationCallback)
                              );
                            },
                            child:const Text("عبر الواتساب"),
@@ -215,5 +216,12 @@ class _PhoneTextEditorState extends State<PhoneTextEditor> {
        )
       ],
     );
+  }
+
+  _onPhoneVerificationCallback()async{
+    setState(() {
+      widget.model.verifiedNumber = phoneNumber;
+    });
+    FunctionHelpers.toast("تم التحقق",status:true);
   }
 }
