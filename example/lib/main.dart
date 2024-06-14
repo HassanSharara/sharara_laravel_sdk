@@ -8,6 +8,7 @@ import 'package:sharara_laravel_sdk/ui.dart';
 
 
 
+
 void main()async{
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
