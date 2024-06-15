@@ -9,7 +9,7 @@ import 'package:sharara_laravel_sdk/src/Constants/constants.dart';
 class LaravelConfigurations extends LaravelSDKInitializer {
   WhatsAppAuthor? whatsAppAuthor;
   Widget Function()? _appLogo;
-  String appName,mainApiUrl;
+  String appName,mainApiUrl,registerApiKeyWord,loginApiKeyWord,forgetApiKeyWord;
   final bool activateFBPhoneAuth;
   final Color mainColor;
   static  LaravelConfigurations? configurations ;
@@ -19,6 +19,9 @@ class LaravelConfigurations extends LaravelSDKInitializer {
     this.activateFBPhoneAuth = false,
     required this.appName,
     required this.mainApiUrl,
+    this.registerApiKeyWord = "register",
+    this.loginApiKeyWord = "login",
+    this.forgetApiKeyWord = "forget",
     this.mainColor = RoyalColors.lightBlue
   }){
     _appLogo = appLogo;

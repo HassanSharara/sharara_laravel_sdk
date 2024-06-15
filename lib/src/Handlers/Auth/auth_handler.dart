@@ -160,13 +160,14 @@ extension ApiExt on AuthHandler {
     screenAuthType.value == AuthType.forget ? _forgetUrl:
    _registerUrl;
 
-  String get mainAppUrl => LaravelConfigurations.configurations!.mainApiUrl;
+  String get mainAppUrl => laravelConfig.mainApiUrl;
+  LaravelConfigurations get laravelConfig => LaravelConfigurations.configurations!;
   String get _prefixUrl {
     final String main = mainAppUrl ;
     return "$main${main.endsWith("/")?"":"/"}RoyalFirster";
   }
 
-  String get _loginUrl => "$_prefixUrl/login";
-  String get _registerUrl => "$_prefixUrl/register";
-  String get _forgetUrl => "$_prefixUrl/forget";
+  String get _loginUrl => "$_prefixUrl/${laravelConfig.loginApiKeyWord}";
+  String get _registerUrl => "$_prefixUrl/${laravelConfig.registerApiKeyWord}";
+  String get _forgetUrl => "$_prefixUrl/${laravelConfig.forgetApiKeyWord}";
 }
