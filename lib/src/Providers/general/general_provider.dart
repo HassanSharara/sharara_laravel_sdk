@@ -11,7 +11,7 @@ abstract class GeneralLaravelApiProvider<G> {
   final List<LaravelFilter> filters;
   final List<LaravelSearchFilter> searchByFilters;
   bool mixFiltersResults;
-  final LaravelQueryBuilder? defaultQuery;
+  LaravelQueryBuilder? defaultQuery;
   LaravelQueryBuilder? searchByQueryBuilder,filterQueryBuilder;
   GeneralLaravelApiProvider({required this.url,
     final String? key,
@@ -38,8 +38,11 @@ abstract class GeneralLaravelApiProvider<G> {
   });
 
   Future<LaravelResponse?> invokeApiCall(Future<LaravelResponse?>  callback)async{
+    if(disposed)return null;
     loading.value = true;
-    final Object? response =  await FunctionHelpers.tryFuture<Object>(callback);
+    final Object? response =  await FunctionHelpers.tryFuture<Object>(callback,
+    );
+    if(disposed)return null;
     loading.value = false;
     if ( response is LaravelResponse) return response;
     return null;
@@ -57,6 +60,7 @@ abstract class GeneralLaravelApiProvider<G> {
   }
 
   dispose(){
+    disposed = true;
     loading.dispose();
     notifier.dispose();
     for (final LaravelSearchFilter element in searchByFilters) {

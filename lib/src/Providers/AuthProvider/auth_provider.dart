@@ -3,7 +3,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:sharara_laravel_sdk/sharara_laravel_sdk.dart';
 import 'package:sharara_laravel_sdk/src/Providers/AuthProvider/cache.dart';
-import 'package:sharara_laravel_sdk/src/models/Response/laravel_response.dart';
 
 class AuthProvider<U extends AuthUser> {
   final U Function(dynamic) builder;
@@ -13,25 +12,29 @@ class AuthProvider<U extends AuthUser> {
   );
   static AuthProvider instance = AuthProvider.nativeOne();
 
-  static void signNewAuthProvider(AuthProvider provider)=> instance = provider;
+  static AuthProvider signNewAuthProvider(final AuthProvider provider)=> instance = provider;
 
   final ValueNotifier<U?> userNotifier = ValueNotifier(null);
+  U? get user => userNotifier.value;
   final AuthProviderCache cache =AuthProviderCache();
 
-  init(){
+  void init(){
     _fromCache();
   }
 
 
   _fromCache(){
-    _changeUserObjectByDynamic(cache.get(),callSaver:false);
+    final dynamic data = cache.get();
+    _changeUserObjectByDynamic(data,callSaver:false);
   }
 
   Future<void> handleApiResponse(final LaravelResponse response)async{
-    if(response.couldInvokeAuthHandler) {
+    if(response.responseContainsAuthMessage) {
       return  await _handleAuthUserResponse(response);
     } else if(response.couldInvokeUserUpdate) {
       return await _handleUpdateUserResponse(response);
+    } else  if(response.responseContainsNotAuthMessage){
+      await logout();
     }
   }
 
@@ -43,6 +46,7 @@ class AuthProvider<U extends AuthUser> {
     if(response.data is! Map)return;
     final Map data = userNotifier.value?.jsonParsedMap ?? {};
     response.data.forEach((key,value){
+      if(key=="id")return;
       data[key] = value;
     });
     await _changeUserObjectByDynamic(data);

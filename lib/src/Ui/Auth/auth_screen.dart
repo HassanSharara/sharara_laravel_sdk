@@ -2,10 +2,14 @@
 import 'package:flutter/material.dart';
 import 'package:sharara_apps_building_helpers/ui.dart';
 import 'package:sharara_laravel_sdk/sharara_laravel_sdk.dart';
+import 'package:sharara_laravel_sdk/src/Ui/Auth/WhatsAppGuard/guard.dart';
 import 'package:sharara_laravel_sdk/src/Ui/LIBuilder/li_builder.dart';
 
 class LaravelDefaultAuthScreen extends StatefulWidget {
-  const LaravelDefaultAuthScreen({super.key});
+  const LaravelDefaultAuthScreen({super.key,
+   this.onPopShouldTrueInvoked,
+  });
+  final Function(BuildContext)?onPopShouldTrueInvoked;
   @override
   State<LaravelDefaultAuthScreen> createState() => _AuthScreenState();
 }
@@ -20,9 +24,11 @@ class _AuthScreenState extends State<LaravelDefaultAuthScreen> {
   }
   @override
   Widget build(BuildContext context) {
+
+    final Size size = MediaQuery.of(context).size;
     return PopScope(
       canPop:false,
-      onPopInvoked:(_){
+      onPopInvokedWithResult:(_,__)async{
         if(_)return;
         if(authHandler.screenAuthType.value!=null){
           if(authHandler.screenAuthType.value==AuthType.forget){
@@ -32,88 +38,106 @@ class _AuthScreenState extends State<LaravelDefaultAuthScreen> {
           authHandler.changeAuthScreen();
           return;
         }
-        Navigator.pop(context);
+       final bool ss =  Navigator.canPop(context);
+       if(!ss){
+         if(widget.onPopShouldTrueInvoked!=null)widget.onPopShouldTrueInvoked!(context);
+         return;
+       }
+         Navigator.pop(context);
       },
       child: LiBuilder(
         builder: (context,configurations) {
           return Scaffold(
             appBar:AppBar(
-              title:const Text("الوصول"),
               centerTitle:true,
             ),
-            body:ListView(
-              padding:const EdgeInsets.all(10),
-              children: [
-                if(configurations.appLogo!=null)
-                  SizedBox(
-                    height:80,
-                    width:80,
-                    child:configurations.appLogo,
-                  ),
-               const SizedBox(height:15,),
+            body:Center(
+              child: ListView(
+                padding:const EdgeInsets.all(10),
+                children: [
+                  if(configurations.appLogo!=null)
+                    SizedBox(
+                      height:80,
+                      width:80,
+                      child:configurations.appLogo,
+                    ),
+                 const SizedBox(height:15,),
 
-
-              ValueListenableBuilder(
-                   valueListenable:authHandler.screenAuthType,
-                   builder:(final BuildContext context,final AuthType? authType,_){
-                     if(authType==null) {
+                ValueListenableBuilder(
+                     valueListenable:authHandler.screenAuthType,
+                     builder:(final BuildContext context,final AuthType? authType,_){
+                       if(authType==null) {
+                         return Column(
+                           mainAxisAlignment:MainAxisAlignment.center,
+                           crossAxisAlignment:CrossAxisAlignment.center,
+                           children: [
+                             SizedBox(height:size.height*0.20,),
+                             RoyalRoundedButton(
+                               color:RoyalColors.secondaryColor.withValues(alpha:0.7),
+                               title: "تسجيل دخول",
+                               onPressed:()=>authHandler.changeAuthScreen(AuthType.login),
+                             ),
+                             const SizedBox(height:25,),
+                             RoyalRoundedButton(
+                               title: "انشاء حساب",
+                               color:RoyalColors.mainAppColor.withValues(alpha: 0.7),
+                               onPressed:()=>authHandler.changeAuthScreen(AuthType.register),
+                             ),
+                           ],
+                         );
+                       }
                        return Column(
                          children: [
-                           RoyalRoundedButton(
-                             color:RoyalColors.indigo.withOpacity(0.7),
-                             title: "تسجيل دخول",
-                             onPressed:()=>authHandler.changeAuthScreen(AuthType.login),
+                           ... authHandler
+                               .currentModels
+                               .map(
+                                   (model)
+                               => Padding(
+                                 padding:const EdgeInsets.symmetric(vertical:10),
+                                 child:model.controller is PhoneTextEditController?
+                                  PhoneTextEditor(
+                                    isNumberVerified:()=> model.verified  ,
+                                    hideVerification:()=> !authHandler.numberNeedToBeVerified,
+                                    model:model as  PhoneAuthModel
+                                  ):
+                                 RoyalTextFormField(
+                                   controller:model.controller,
+                                   title:model.name,
+                                   inputType:model.numeric?TextInputType.phone:null,
+                                   isPassword:model.isPassword,
+                                 ),
+                               )
                            ),
-                           const SizedBox(height:25,),
-                           RoyalRoundedButton(
-                             title: "انشاء حساب",
-                             color:RoyalColors.mainAppColor.withOpacity(0.7),
-                             onPressed:()=>authHandler.changeAuthScreen(AuthType.register),
-                           ),
-                         ],
-                       );
-                     }
-                     return Column(
-                       children: [
-                         ... authHandler
-                             .currentModels
-                             .map(
-                                 (model)
-                             => Padding(
-                               padding:const EdgeInsets.symmetric(vertical:10),
-                               child:model.controller is PhoneTextEditController?
-                                PhoneTextEditor(
-                                  authHandler:authHandler,
-                                  model:model as  PhoneAuthModel
-                                ):
-                               RoyalTextFormField(
-                                 controller:model.controller,
-                                 title:model.name,
-                                 inputType:model.numeric?TextInputType.phone:null,
-                                 isPassword:model.isPassword,
-                               ),
+                           const SizedBox(height:15,),
+                           if(authType==AuthType.login)
+                             GestureDetector(
+                               onTap:()=>authHandler.changeAuthScreen(AuthType.forget),
+                               child: Text("هل نسيت كلمة السر ؟",style:TextStyle(
+                                 color:RoyalColors.mainAppColor,
+                                 fontWeight:FontWeight.bold
+                               ),),
                              )
-                         ),
-                         const SizedBox(height:15,),
-                         if(authType==AuthType.login)
-                           GestureDetector(
-                             onTap:()=>authHandler.changeAuthScreen(AuthType.forget),
-                             child: Text("هل نسيت كلمة السر ؟",style:TextStyle(
-                               color:RoyalColors.mainAppColor,
-                               fontWeight:FontWeight.bold
-                             ),),
-                           ),
-                         const SizedBox(height:25,),
-
-                         RoyalRoundedButton(
-                           title: "تقدم",
-                           onPressed:authHandler.callApi,
-                         )
-                       ]
-                      ,
-                     );
-                   })
-              ],
+                           else if(authType == AuthType.forget)
+                             GestureDetector(
+                               onTap:()=>authHandler.changeAuthScreen(AuthType.login),
+                               child: Text("تسجيل دخول",style:TextStyle(
+                                   color:RoyalColors.mainAppColor,
+                                   fontWeight:FontWeight.bold
+                               ),),
+                             )
+                           ,
+                           const SizedBox(height:25,),
+              
+                           RoyalRoundedButton(
+                             title: "تقدم",
+                             onPressed:authHandler.callApi,
+                           )
+                         ]
+                        ,
+                       );
+                     })
+                ],
+              ),
             )
           );
         }
@@ -124,10 +148,15 @@ class _AuthScreenState extends State<LaravelDefaultAuthScreen> {
 
 class PhoneTextEditor extends StatefulWidget {
   const PhoneTextEditor({super.key,
-    required this.authHandler,
-    required this.model});
+    required this.model,
+    required this.isNumberVerified,
+     this.hideVerification,
+     this.onVerified,
+  });
   final PhoneAuthModel model;
-  final AuthHandler authHandler;
+  final bool Function() isNumberVerified;
+  final bool Function()? hideVerification;
+  final Function()? onVerified;
   @override
   State<PhoneTextEditor> createState() => _PhoneTextEditorState();
 }
@@ -145,12 +174,13 @@ class _PhoneTextEditorState extends State<PhoneTextEditor> {
             title:widget.model.name, controller:widget.model.controller
         ),
 
+       if(widget.hideVerification==null || !widget.hideVerification!())
        ValueListenableBuilder(
          valueListenable:widget.model.controller,
          child:const SizedBox(),
          builder:(BuildContext context,final t,_){
 
-           if(widget.model.verified){
+           if(widget.isNumberVerified()){
              return  const Row(
                mainAxisAlignment:MainAxisAlignment.center,
                crossAxisAlignment:CrossAxisAlignment.center,
@@ -164,7 +194,7 @@ class _PhoneTextEditorState extends State<PhoneTextEditor> {
            if(t.text.isEmpty)return _!;
            return Column(
                children:[
-                 if(widget.authHandler.numberNeedToBeVerified)...[
+                 if(!widget.isNumberVerified())...[
 
                    const SizedBox(height:5,),
                    const Text("يرجى توثيق رقم الهاتف"),
@@ -182,7 +212,9 @@ class _PhoneTextEditorState extends State<PhoneTextEditor> {
                              FunctionHelpers.jumpTo(context,
                               FbPhoneAuthScreen(
                                   phoneNumber: phoneNumber,
-                                  onVerificationSucceed:(v){
+                                  onVerificationSucceed:(v)async{
+                                    await Future.delayed(const Duration(milliseconds:500));
+                                    if(!mounted)return;
                                     _onPhoneVerificationCallback();
                                   })
                              );
@@ -199,11 +231,19 @@ class _PhoneTextEditorState extends State<PhoneTextEditor> {
                            onPressed:(){
 
                              FunctionHelpers.jumpTo(context,
-                             WhatsAppAuthenticator(
-                                 appAuthor: LaravelConfigurations.configurations!.whatsAppAuthor!,
-                                 toPhoneNumber: phoneNumber,
-                                 onSuccess:_onPhoneVerificationCallback)
+                             LaravelWhatsAppGuard(
+                                 phoneNumber: phoneNumber,
+                                 onAuthenticated:_onPhoneVerificationCallback)
                              );
+                             // invalid code code
+                             // FunctionHelpers.jumpTo(
+                             //     context,
+                             //    WhatsAppAuthenticator(
+                             //     appAuthor: LaravelConfigurations.configurations!.whatsAppAuthor!,
+                             //     toPhoneNumber: phoneNumber,
+                             //     onSuccess:_onPhoneVerificationCallback,
+                             // )
+                             // );
                            },
                            child:const Text("عبر الواتساب"),
                          ),
@@ -218,7 +258,9 @@ class _PhoneTextEditorState extends State<PhoneTextEditor> {
     );
   }
 
-  _onPhoneVerificationCallback()async{
+  _onPhoneVerificationCallback([final String? token])async{
+    if(token != null ) widget.model.otpToken =  token;
+    if(widget.onVerified!=null)widget.onVerified!();
     setState(() {
       widget.model.verifiedNumber = phoneNumber;
     });

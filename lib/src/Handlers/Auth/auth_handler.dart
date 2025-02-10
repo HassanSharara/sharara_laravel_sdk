@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:sharara_apps_building_helpers/ui.dart';
 import 'package:sharara_laravel_sdk/sharara_laravel_sdk.dart';
 import 'package:sharara_laravel_sdk/src/http/http.dart';
-import 'package:sharara_laravel_sdk/src/models/Response/laravel_response.dart';
 
 enum AuthType {
   register,
@@ -30,6 +29,9 @@ class AuthModel {
          :TextEditingController()
      );
    }
+   dispose(){
+     controller.dispose();
+   }
 }
 
 class PhoneAuthModel extends AuthModel{
@@ -37,7 +39,15 @@ class PhoneAuthModel extends AuthModel{
     super.required =true,
     super.name,super.numeric = true}):assert(controller is PhoneTextEditController);
   String verifiedNumber = "";
+  String? otpToken;
   bool get verified => verifiedNumber == (controller as PhoneTextEditController).nText;
+
+  Map<String,dynamic> get toMap => {
+    "phone":(controller as PhoneTextEditController).nText,
+    if(otpToken!=null)
+      "otp_token":otpToken
+  };
+
 }
 class AuthHandler {
 
@@ -103,12 +113,22 @@ class AuthHandler {
     );
   }
 
-  Map<String,dynamic> get generateMap => {
-    for(final AuthModel model in currentModels)
-      model.column:model.controller is PhoneTextEditController ?
-    (model.controller as PhoneTextEditController).nText
-    :model.controller.text
-  };
+  Future<Map<String,dynamic>> get generateMap async {
+    final Map<String,dynamic> body ={
+      for(final AuthModel model in currentModels)
+        if (model is PhoneAuthModel)
+        ...model.toMap
+      else
+        model.column:
+        model.controller is PhoneTextEditController ?
+        (model.controller as PhoneTextEditController).nText
+            :model.controller.text,
+    };
+    if(laravelConfig.onAuthHandlerMapGeneratorInvoked!=null){
+      return await laravelConfig.onAuthHandlerMapGeneratorInvoked!(body);
+    }
+    return body;
+  }
 
 
 
@@ -116,8 +136,25 @@ class AuthHandler {
     if(!everyThingIsValid)return;
     await LaravelHttp.instance.post<LaravelResponse>(
         url: url,
-        queryParameters:generateMap,
-        withLoading:true);
+        queryParameters:await generateMap,
+        withLoading:true,
+      )
+    .then((res){
+
+      if(res==null ) return;
+      if(!res.isSuccess){
+        if(res.msg?.contains("otp") == true){
+           for (final model in currentModels){
+             if(model is PhoneAuthModel) {
+               model.otpToken = null;
+             }
+           }
+        }
+      }
+      for (final e in currentModels) {
+        e.controller.clear();
+      }
+    });
   }
 
 

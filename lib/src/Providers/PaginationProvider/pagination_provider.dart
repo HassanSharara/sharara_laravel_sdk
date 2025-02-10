@@ -6,7 +6,6 @@ import 'package:sharara_laravel_sdk/sharara_laravel_sdk.dart';
 import 'package:sharara_laravel_sdk/src/Constants/constants.dart';
 import 'package:sharara_laravel_sdk/src/Providers/general/general_provider.dart';
 import 'package:sharara_laravel_sdk/src/http/http.dart';
-import 'package:sharara_laravel_sdk/src/models/Response/laravel_response.dart';
 
 typedef PaginationChildBuilder<M> = M Function(dynamic);
 class LaravelPaginationProvider
@@ -42,6 +41,7 @@ class LaravelPaginationProvider
 
   @override
   changeNotifier(List<M>? value){
+    if(disposed)return;
     if(value==null)return;
     super.changeNotifier(List.from(value));
   }
@@ -51,6 +51,7 @@ class LaravelPaginationProvider
   fromApi({
     final Map<String,dynamic>? body,
     final Function()? onInternetError,
+    final Future Function(LaravelResponse?)? onResponse,
     onIncomeDataIsNotList,
     final String? forcedUrl
   }) async {
@@ -76,6 +77,7 @@ class LaravelPaginationProvider
           cancelToken:cancelToken,
         )
     );
+    if(onResponse!=null)await FunctionHelpers.tryFuture(onResponse(response));
     if(response==null) {
       if(onInternetError!=null)onInternetError();
       return ;
@@ -103,7 +105,8 @@ class LaravelPaginationProvider
   }
 
 
-  bool get thereIsNoMoreDataToPaginate => lastPaginationModel!=null && lastPaginationModel?.nextPageUrl == null;
+  bool get thereIsNoMoreDataToPaginate =>
+      lastPaginationModel!=null && lastPaginationModel?.nextPageUrl == null;
   Future loadMore()async{
     if(thereIsNoMoreDataToPaginate){
       FunctionHelpers.toast(noMoreLabel);
@@ -116,6 +119,11 @@ class LaravelPaginationProvider
   filterNotifierBy({required LaravelQueryBuilder queryBuilder}) {
     lastPaginationModel = null;
     return super.filterNotifierBy(queryBuilder: queryBuilder,);
+  }
+
+  defaultFilterNotifierBy({required final LaravelQueryBuilder queryBuilder}){
+    defaultQuery = queryBuilder;
+    refresh();
   }
 
   @override
@@ -155,6 +163,16 @@ extension DataOrganizer<M extends GeneralLaravelModel> on LaravelPaginationProvi
     changeNotifier(models);
     _saveAllModelsToLocal();
   }
+
+  remove(final dynamic model){
+    final String id = model is String ? model:
+        model is M ? model.id.toString() : "";
+    final List<M> values = notifierValue ?? [];
+    values.removeWhere((m)=>m.id.toString() == id);
+    changeNotifier(values);
+    _saveAllModelsToLocal();
+  }
+
   insertOne(final M? model,{final int index = 0}){
     if(model==null)return;
     final List<M>? models = notifierValue;
@@ -163,7 +181,6 @@ extension DataOrganizer<M extends GeneralLaravelModel> on LaravelPaginationProvi
     changeNotifier(models);
     _saveAllModelsToLocal();
   }
-
   _saveAllModelsToLocal()async{
     final models = notifierValue??[];
     if(!isFirstPage || models.isEmpty)return;
@@ -173,6 +190,40 @@ extension DataOrganizer<M extends GeneralLaravelModel> on LaravelPaginationProvi
       data.add(item.jsonParsedMap!);
     }
     await cache.insert(data);
+  }
+
+  Future<bool> updateModelsToLocalAndNotifier(final dynamic mods)async{
+    print("invoked ");
+    final List models = mods is List ? mods : [ mods ];
+    return await _updateModelsToLocalAndNotifier(models);
+  }
+
+  Future<bool> _updateModelsToLocalAndNotifier(List<dynamic> mods)async{
+    final List<M> models = [];
+    for(final dynamic data in mods){
+      if(data is M){
+        models.add(data);
+        continue;
+      }
+      if(data is! Map)continue;
+      final M? m = FunctionHelpers.tryCatch<M>(()=>builder(data));
+      if(m==null)continue;
+      models.add(m);
+    }
+    if(models.isEmpty  )return false;
+    final List<M> lastRse = notifierValue ?? [];
+    for( final M model in models){
+      if(disposed)return false;
+      final M? m = lastRse.where((e)=> e.isTheyHaveTheSameId(model)).firstOrNull;
+      if(m==null){
+        lastRse.add(model);
+        continue;
+      }
+      model << m;
+    }
+    changeNotifier(lastRse);
+    if(isFirstPage)_saveAllModelsToLocal();
+    return true;
   }
 
 }

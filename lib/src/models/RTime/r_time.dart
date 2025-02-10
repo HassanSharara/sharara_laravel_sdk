@@ -35,8 +35,14 @@ class RTime {
   }
   String timeOfDayAsValidString(){
     if(dateTime != null ){
-      return "${timeOfDay!.period.name}   ${timeOfDay!.hourOfPeriod}: ${dateTime!.minute} ";
+      return " ${timeOfDay!.hourOfPeriod}: ${dateTime!.minute} ${timeOfDay!.period.name} ";
     }
     return'';
+  }
+
+  static RTime? fromJsonOrNull(final dynamic json,{final String columnName = "created_at"}){
+    final res = RTime.fromJson(json,columnName: columnName);
+    if(res?.dateTime!=null)return res;
+    return null;
   }
 }

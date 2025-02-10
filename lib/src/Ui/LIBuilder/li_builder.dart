@@ -24,7 +24,7 @@ class LiBuilder extends StatelessWidget {
 
 
 class LaravelAppBuilder extends StatelessWidget {
-  const LaravelAppBuilder({super.key,required this.builder});
+  const LaravelAppBuilder({super.key,required this.builder,});
   final WidgetBuilder builder;
   @override
   Widget build(BuildContext context) {

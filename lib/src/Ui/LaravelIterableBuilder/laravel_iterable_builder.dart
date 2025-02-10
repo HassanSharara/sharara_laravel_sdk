@@ -11,24 +11,33 @@ enum IterableViewType {
 class LaravelIterableBuilder<T extends GeneralLaravelModel>extends StatefulWidget {
   const LaravelIterableBuilder({super.key,
     required this.provider,
-    required this.builder,
+    this.builder,
     this.scrollController,
     this.topWidgets,
     this.bottomWidgets,
     this.whenEmptyWidget,
+    this.onListReadyBuilder,
+    this.sliverGridDelegate,
     this.shrinkWrap = true,
     this.primary = true,
+    this.isGrid = false,
     this.reverse = false,
     this.scrollDirection = Axis.vertical,
-    this.emptyWidgetSize = const Size(30,30),
+    this.emptyWidgetSize = const Size(60,60),
     this.emptyTitle = "فارغة",
     this.loadMoreLabel = "المزيد",
     this.viewType = IterableViewType.slivers,
     this.autoInit = false,
-    this.showLoadMoreOnTheEndOfItemBuilder,
-  });
+    this.showLoading = true,
+    this.showTopAndBottomWidgetsIfEmpty = false,
+    this.gridChildAspectRatio = 1.1,
+    this.showLoadMoreOnTheEndOfItemBuilder = true,
+  }):assert(
+  builder!=null ||
+  onListReadyBuilder !=null
+  );
   final LaravelPaginationProvider<T> provider;
-  final Widget Function(BuildContext,T,int) builder;
+  final Widget Function(BuildContext,T,int)? builder;
   final ScrollController? scrollController;
   final List<Widget> Function(BuildContext)? topWidgets,bottomWidgets;
   final Widget? whenEmptyWidget;
@@ -37,9 +46,12 @@ class LaravelIterableBuilder<T extends GeneralLaravelModel>extends StatefulWidge
   final bool shrinkWrap,primary,reverse;
   final Axis scrollDirection;
   final IterableViewType viewType;
-  final bool autoInit;
+  final bool autoInit,isGrid,showTopAndBottomWidgetsIfEmpty,showLoading;
   final bool? showLoadMoreOnTheEndOfItemBuilder;
   final String loadMoreLabel;
+  final SliverGridDelegate? sliverGridDelegate;
+  final double gridChildAspectRatio;
+  final Widget Function(BuildContext context,List<T>)? onListReadyBuilder;
   @override
   State<LaravelIterableBuilder<T>> createState() => _LaravelIterableBuilderState();
 }
@@ -54,52 +66,58 @@ class _LaravelIterableBuilderState<T extends GeneralLaravelModel> extends State<
     }
     super.initState();
   }
+  buildEmptyWidget(){
+    if(widget.whenEmptyWidget!=null)return widget.whenEmptyWidget!;
+    return LayoutBuilder(
+      builder:(final BuildContext context,final BoxConstraints constraints){
+        double maxWidth = constraints.maxWidth;
+        double maxHeight = constraints.maxHeight;
+        if(maxWidth.isNaN || maxHeight.isNaN)return const SizedBox();
+
+        if(maxHeight >= widget.emptyWidgetSize.height && maxWidth>= widget.emptyWidgetSize.width ){
+          maxHeight = widget.emptyWidgetSize.height;
+          maxWidth = widget.emptyWidgetSize.width;
+        }
+        return Center(
+          child: SizedBox(
+            height:maxHeight,
+            width:maxWidth,
+            child: Column(
+              children: [
+                Icon(Icons.cloud,
+                  color:ShararaThemeController.primaryColor,),
+                Expanded(child: FittedBox(
+                  child:Text(widget.emptyTitle),
+                ))
+
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return LaravelLoadingFrameBuilder(
         provider: widget.provider,
+        showLoading:widget.showLoading,
         child:ValueListenableBuilder(
           valueListenable:widget.provider.notifier,
           builder:(BuildContext context,final List<T>? models,_){
             if(models==null)return const SizedBox();
-            if(models.isEmpty){
-              if(widget.whenEmptyWidget!=null)return widget.whenEmptyWidget!;
-              return LayoutBuilder(
-                builder:(final BuildContext context,final BoxConstraints constraints){
-                  double maxWidth = constraints.maxWidth;
-                  double maxHeight = constraints.maxHeight;
-                  if(maxWidth.isNaN || maxHeight.isNaN)return const SizedBox();
-
-                  if(maxHeight >= widget.emptyWidgetSize.height && maxWidth>= widget.emptyWidgetSize.width ){
-                    maxHeight = widget.emptyWidgetSize.height;
-                    maxWidth = widget.emptyWidgetSize.width;
-                  }
-                  return Center(
-                    child: SizedBox(
-                      height:maxHeight,
-                      width:maxWidth,
-                      child: Column(
-                        children: [
-                           Icon(Icons.cloud,
-                            color:ShararaThemeController.primaryColor,),
-                          Expanded(child: FittedBox(
-                            child:Text(widget.emptyTitle),
-                          ))
-                    
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              );
-            }
+            if(models.isEmpty && !widget.showTopAndBottomWidgetsIfEmpty)return buildEmptyWidget();
+            if(widget.onListReadyBuilder!=null)return widget.onListReadyBuilder!(context,models);
+            if(widget.builder==null)return const SizedBox();
             final int itemCount = widget.provider.showLoadMoreOnTheEndOfItemBuilder?
             models.length+1:models.length;
             itemBuilder(final BuildContext context,final int index){
               if(index == models.length){
                 if(!widget.provider.showLoadMoreOnTheEndOfItemBuilder
-                 || widget.provider.thereIsNoMoreDataToPaginate){
+                 || widget.provider.thereIsNoMoreDataToPaginate
+                  || widget.provider.lastPaginationModel == null
+                 ){
                   return const SizedBox();
                 }
                 return Align(
@@ -110,8 +128,9 @@ class _LaravelIterableBuilderState<T extends GeneralLaravelModel> extends State<
                 );
               }
               final T model = models[index];
-              return widget.builder(context,model,index);
+              return widget.builder!(context,model,index);
             }
+
             if(widget.viewType == IterableViewType.slivers){
               return RefreshIndicator(
                 onRefresh:()=>widget.provider.refresh(),
@@ -123,6 +142,21 @@ class _LaravelIterableBuilderState<T extends GeneralLaravelModel> extends State<
                   reverse:widget.reverse,
                   slivers: [
                     if(widget.topWidgets!=null)...widget.topWidgets!(context),
+
+                    if(models.isEmpty)
+                      SliverToBoxAdapter(
+                        child:buildEmptyWidget(),
+                      ),
+                    if(widget.isGrid)
+                      SliverGrid(
+                          delegate:SliverChildBuilderDelegate(
+                              itemBuilder,
+                              childCount:itemCount
+                          ),
+                          gridDelegate:generateSliverGridDelegate
+                      )
+
+                    else
                     SliverList.builder(
                       key:UniqueKey(),
                       itemCount:itemCount,
@@ -141,6 +175,18 @@ class _LaravelIterableBuilderState<T extends GeneralLaravelModel> extends State<
               reverse:widget.reverse,
               children: [
                 if(widget.topWidgets!=null)...widget.topWidgets!(context),
+
+                SliverToBoxAdapter(
+                  child:buildEmptyWidget(),
+                ),
+                if(widget.isGrid)
+                  GridView.builder(
+                      itemBuilder: itemBuilder,
+                      itemCount:itemCount,
+                      gridDelegate: generateSliverGridDelegate
+                  )
+
+                else
                 ListView.builder(
                   key:UniqueKey(),
                   shrinkWrap:true,
@@ -154,4 +200,10 @@ class _LaravelIterableBuilderState<T extends GeneralLaravelModel> extends State<
           },
         ));
   }
+
+  SliverGridDelegate get generateSliverGridDelegate =>  widget.sliverGridDelegate
+      ?? SliverGridDelegateWithMaxCrossAxisExtent(
+          childAspectRatio:widget.gridChildAspectRatio,
+          maxCrossAxisExtent:200
+      );
 }

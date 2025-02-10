@@ -14,17 +14,18 @@ void main()async{
   await LaravelSDKInitializer.initialize(
     configurations:()=>
         LaravelConfigurations(
-          whatsAppAuthor:WhatsAppAuthor(
-          accessToken: WhatsAppApiConstans.accessToken,
-          templateName:WhatsAppApiConstans.templateName,
-          fromPhoneNumberId: WhatsAppApiConstans.fromNumId.toString()
+          whatsAppAuthor:const WhatsAppAuthor(
+          accessToken: "",
+          templateName:"",
+          fromPhoneNumberId: ""
         ),
+        logoPath:"",
         appName: "test",
         appLogo:()=>RoyalShadowContainer(
           backgroundColor:RoyalColors.mainAppColor,
           child:const Text("LOGO",style:TextStyle(color:RoyalColors.white),),
         ),
-        mainApiUrl:"http://192.168.0.190/dev/general/public"
+        mainApiUrl:"http://192.168.0.100/dev/general/public"
     )
   );
   ShararaHttp.defaultHeaders = <String,dynamic>{
@@ -58,7 +59,12 @@ class _FirstScreenState extends State<FirstScreen> {
     return Scaffold(
       appBar:AppBar(
         title:ElevatedButton(
-          onPressed:()=>FunctionHelpers.jumpTo(context,const ShararaThemePicker()),
+          onPressed:(){
+            FunctionHelpers.jumpTo(
+                context,
+                const ShararaThemePicker()
+            );
+          },
           child:const Text("settings"),
         ),
         actions: [

@@ -1,6 +1,5 @@
 
 import 'package:flutter/cupertino.dart';
-import 'package:sharara_laravel_sdk/sharara_laravel_sdk.dart';
 
 class LaravelFilter {
   final String name;
@@ -65,7 +64,7 @@ class LaravelFilterQuery<T,V> {
           }
         };
         break;
-      case LaravelQueryClosure.whereNull || LaravelQueryClosure.whereNotNull:
+      case LaravelQueryClosure.whereNull || LaravelQueryClosure.whereNotNull || LaravelQueryClosure.orWhereNull:
         result[closure.name]={
           "root":{
             "column":column,
@@ -155,6 +154,7 @@ enum LaravelQueryClosure {
   whereIn,
   distinct,
   whereNull,
+  orWhereNull,
   whereNotNull,
   having,
   orderBy,
@@ -240,6 +240,17 @@ class LaravelQueryBuilder {
    }){
     filters.push(
         LaravelFilterQuery(closure:LaravelQueryClosure.whereNull,
+            column:column,
+            extraBuilder:insideConditions
+        )
+    );
+    return this;
+  }
+  LaravelQueryBuilder orWhereNull(final String column,{
+    final List<LaravelQueryBuilder>? insideConditions,
+   }){
+    filters.push(
+        LaravelFilterQuery(closure:LaravelQueryClosure.orWhereNull,
             column:column,
             extraBuilder:insideConditions
         )

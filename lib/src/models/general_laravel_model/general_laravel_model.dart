@@ -1,5 +1,8 @@
 
+
+import 'package:sharara_apps_building_helpers/sharara_apps_building_helpers.dart';
 import 'package:sharara_laravel_sdk/src/models/Errors/errors.dart';
+import 'package:sharara_laravel_sdk/src/models/Image/laravel_image.dart';
 import 'package:sharara_laravel_sdk/src/models/RTime/r_time.dart';
 
 abstract class GeneralModelsJsonSerializer {
@@ -13,20 +16,34 @@ abstract class GeneralModelsJsonSerializer {
     final dynamic v = jsonParsedMap![key];
     return v;
   }
+
+  double? doubleParse(final dynamic key){
+    return double.tryParse(get(key).toString());
+  }
+
+  int? intParse(final dynamic key){
+    return int.tryParse(get(key).toString());
+  }
   void buildModelProperties();
 }
 
 
 abstract class GeneralLaravelModel<T> extends GeneralModelsJsonSerializer {
   T? id;
+  String? imageUrl;
+  List<LaravelImage> images = [];
   GeneralLaravelModel.fromJson(super.parsed) : super.fromJson(){
+    build();
+  }
 
+  void build(){
     id = get("id");
     rebuildModel();
   }
   void rebuildModel(){
     buildTimestampObjects();
     buildModelProperties();
+    buildImagesProperties();
   }
   RTime? createdAt,updatedAt;
   void updateModelMapByKV([final Map? data]){
@@ -45,6 +62,26 @@ abstract class GeneralLaravelModel<T> extends GeneralModelsJsonSerializer {
     }
     jsonParsedMap![mapEntry.key] = mapEntry.value;
   }
+  String? get modelImageUrl {
+    for(final image in images){
+      final String? url = image.url;
+      if( url == null)continue;
+      return url;
+    }
+    return imageUrl;
+  }
+  void buildImagesProperties(){
+    imageUrl = get("image_url");
+    final dynamic images = get('images');
+    if(images==null || images is! List)return;
+    this.images.clear();
+    for(final dynamic imageJson in images){
+      final LaravelImage? img = FunctionHelpers.tryCatch<LaravelImage>(
+          ()=>LaravelImage.fromJson(imageJson));
+      if(img==null)continue;
+      this.images.add(img);
+    }
+  }
   buildTimestampObjects(){
     if(jsonParsedMap==null)return;
     final RTime createdAt = RTime.fromJson(jsonParsedMap);
@@ -56,4 +93,28 @@ abstract class GeneralLaravelModel<T> extends GeneralModelsJsonSerializer {
       this.updatedAt = updatedAt;
     }
   }
+
+
+  bool  isTheyHaveTheSameId(final GeneralLaravelModel model){
+    return model.id != null && model.id == id;
+  }
+
+  void operator<<(final GeneralLaravelModel? other){
+    if(other==null)return;
+    updateModelMapByKV(other.jsonParsedMap);
+    rebuildModel();
+  }
+
+  void operator>>(final GeneralLaravelModel? other){
+    if(other==null)return;
+    other.updateModelMapByKV(jsonParsedMap);
+    rebuildModel();
+  }
+
+
+  updateJsonMapWith(final String key,final dynamic value){
+    jsonParsedMap?[key] = value;
+  }
+
+
 }

@@ -18,7 +18,10 @@ class LaravelResponse extends GeneralLaravelModel {
   bool get hasToast => toast != null && toast!="no_toast";
   bool get isSuccess=> status!=null && status!.toLowerCase().trim()=="success";
   bool get hasMsg => msg != null && msg!="no_msg";
-  bool get couldInvokeAuthHandler => msg!=null && msg!.toLowerCase().contains("auth");
+  bool get couldInvokeAuthHandler => responseContainsAuthMessage || responseContainsNotAuthMessage ||
+  couldInvokeUserUpdate ;
+  bool get responseContainsAuthMessage => msg!=null && msg =="auth";
+  bool get responseContainsNotAuthMessage => msg!=null && msg == "not_auth";
   bool get couldInvokeUserUpdate => msg!= null && msg!.toLowerCase() == "update_user";
   bool get containUpdateMessage => msg!= null && msg!.toLowerCase() == "update";
   bool get hasData => data != null;
