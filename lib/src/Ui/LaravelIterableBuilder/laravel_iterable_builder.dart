@@ -22,6 +22,7 @@ class LaravelIterableBuilder<T extends GeneralLaravelModel>extends StatefulWidge
     this.primary = true,
     this.isGrid = false,
     this.reverse = false,
+    this.refreshFutureCallback ,
     this.scrollDirection = Axis.vertical,
     this.emptyWidgetSize = const Size(60,60),
     this.emptyTitle = "فارغة",
@@ -42,6 +43,7 @@ class LaravelIterableBuilder<T extends GeneralLaravelModel>extends StatefulWidge
   final List<Widget> Function(BuildContext)? topWidgets,bottomWidgets;
   final Widget? whenEmptyWidget;
   final String emptyTitle;
+  final Future Function()? refreshFutureCallback;
   final Size emptyWidgetSize;
   final bool shrinkWrap,primary,reverse;
   final Axis scrollDirection;
@@ -133,7 +135,11 @@ class _LaravelIterableBuilderState<T extends GeneralLaravelModel> extends State<
 
             if(widget.viewType == IterableViewType.slivers){
               return RefreshIndicator(
-                onRefresh:()=>widget.provider.refresh(),
+                onRefresh:()async{
+                  await widget.provider.refresh();
+
+                  if(widget.refreshFutureCallback!=null)await widget.refreshFutureCallback!();
+                },
                 child: CustomScrollView(
                   scrollDirection:widget.scrollDirection,
                   controller:widget.scrollController,

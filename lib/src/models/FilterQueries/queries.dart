@@ -132,9 +132,6 @@ class LaravelFilterQuery<T,V> {
           },
         };
         break;
-
-      default:
-        break;
     }
     return result;
   }

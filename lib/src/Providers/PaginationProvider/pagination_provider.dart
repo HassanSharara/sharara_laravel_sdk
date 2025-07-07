@@ -1,19 +1,60 @@
 
 import 'dart:convert';
-
 import 'package:sharara_apps_building_helpers/http.dart';
 import 'package:sharara_laravel_sdk/sharara_laravel_sdk.dart';
 import 'package:sharara_laravel_sdk/src/Constants/constants.dart';
 import 'package:sharara_laravel_sdk/src/Providers/general/general_provider.dart';
 import 'package:sharara_laravel_sdk/src/http/http.dart';
+import 'package:uuid/uuid.dart';
 
 typedef PaginationChildBuilder<M> = M Function(dynamic);
+
+extension HandlingStaticProviders on LaravelPaginationProvider {
+
+  _signNewProvider(){
+    LaravelPaginationProvider._runningProviders[classId] = this;
+  }
+
+ Future<bool> _updateAllProviders(final dynamic mods,{final bool trigger = false})async{
+    final List models = mods is List ? mods : [ mods ];
+    if( updateAllSimilarProviders || trigger ) {
+      LaravelPaginationProvider._runningProviders.forEach(
+              (id,p)async{
+            if( id  == classId || (p.sensitive && !trigger)) return;
+            FunctionHelpers.tryFuture(p._updateModelsToLocalAndNotifier(models));
+          }
+      );
+    }
+
+    return await _updateModelsToLocalAndNotifier(models);
+  }
+
+  _removeFromAllProviders(final dynamic mods)async{
+     if ( updateAllSimilarProviders ) {
+       LaravelPaginationProvider._runningProviders.forEach(
+               (key,value){
+             if(key == classId || value.sensitive ) return ;
+             value._remove(mods);
+           }
+       );
+     }
+    return _remove(mods);
+  }
+}
+
 class LaravelPaginationProvider
   <M extends GeneralLaravelModel>
   extends GeneralLaravelApiProvider<List<M>> {
   static const String laravelQueryMapKey = "laravel_query_filter";
   static const String defaultQueryMapKey = "default_query_filter";
   static const String searchQueryMapKey = "search_query_filter";
+
+  static  final Map<String,LaravelPaginationProvider> _runningProviders = {};
+
+  bool sensitive = false,updateAllSimilarProviders = false;
+  late final String classId ;
+
+
   LaravelPaginationProvider({
     required super.url,
     required this.builder,
@@ -26,7 +67,10 @@ class LaravelPaginationProvider
     super.searchByFilters = const [],
     super.key}):super(
     boxName:Constants.paginationDataProvideBoxName
-  );
+  ) {
+    classId = const Uuid().v6();
+    _signNewProvider();
+  }
   final String noMoreLabel;
   bool showLoadMoreOnTheEndOfItemBuilder;
   final PaginationChildBuilder<M> builder;
@@ -39,6 +83,11 @@ class LaravelPaginationProvider
     fromApi();
   }
 
+  @override
+  dispose() {
+    _runningProviders.remove(classId);
+    return super.dispose();
+  }
   @override
   changeNotifier(List<M>? value){
     if(disposed)return;
@@ -165,8 +214,12 @@ extension DataOrganizer<M extends GeneralLaravelModel> on LaravelPaginationProvi
   }
 
   remove(final dynamic model){
+    _removeFromAllProviders(model);
+  }
+
+  _remove(final dynamic model){
     final String id = model is String ? model:
-        model is M ? model.id.toString() : "";
+    model is M ? model.id.toString() : "";
     final List<M> values = notifierValue ?? [];
     values.removeWhere((m)=>m.id.toString() == id);
     changeNotifier(values);
@@ -192,10 +245,9 @@ extension DataOrganizer<M extends GeneralLaravelModel> on LaravelPaginationProvi
     await cache.insert(data);
   }
 
-  Future<bool> updateModelsToLocalAndNotifier(final dynamic mods)async{
-    print("invoked ");
-    final List models = mods is List ? mods : [ mods ];
-    return await _updateModelsToLocalAndNotifier(models);
+
+  Future<bool> updateModelsToLocalAndNotifier(final dynamic mods,{final bool trigger = false})async{
+    return await _updateAllProviders(mods,trigger:trigger);
   }
 
   Future<bool> _updateModelsToLocalAndNotifier(List<dynamic> mods)async{
@@ -219,12 +271,11 @@ extension DataOrganizer<M extends GeneralLaravelModel> on LaravelPaginationProvi
         lastRse.add(model);
         continue;
       }
-      model << m;
+      m << model;
     }
     changeNotifier(lastRse);
     if(isFirstPage)_saveAllModelsToLocal();
     return true;
   }
-
 }
 

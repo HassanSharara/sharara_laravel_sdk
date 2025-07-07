@@ -1,6 +1,5 @@
 
 import 'package:flutter/material.dart';
-import 'package:sharara_apps_building_helpers/ui.dart';
 import 'package:sharara_laravel_sdk/sharara_laravel_sdk.dart';
 import 'package:sharara_laravel_sdk/src/Ui/Auth/WhatsAppGuard/guard.dart';
 import 'package:sharara_laravel_sdk/src/Ui/LIBuilder/li_builder.dart';
@@ -16,7 +15,6 @@ class LaravelDefaultAuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<LaravelDefaultAuthScreen> {
   final AuthHandler authHandler = AuthHandler();
-
   @override
   void dispose() {
     authHandler.dispose(context);
@@ -74,15 +72,20 @@ class _AuthScreenState extends State<LaravelDefaultAuthScreen> {
                              SizedBox(height:size.height*0.20,),
                              RoyalRoundedButton(
                                color:RoyalColors.secondaryColor.withValues(alpha:0.7),
-                               title: "تسجيل دخول",
+                               title:
+                               LaravelConfigurations.configurations?.getLoginWord == null ? "تسجيل دخول"
+                               :LaravelConfigurations.configurations!.getLoginWord!(),
                                onPressed:()=>authHandler.changeAuthScreen(AuthType.login),
                              ),
-                             const SizedBox(height:25,),
-                             RoyalRoundedButton(
-                               title: "انشاء حساب",
-                               color:RoyalColors.mainAppColor.withValues(alpha: 0.7),
-                               onPressed:()=>authHandler.changeAuthScreen(AuthType.register),
-                             ),
+                             if(LaravelConfigurations.configurations?.registerApiKeyWord!=null)
+                               ...[
+                                 const SizedBox(height:25,),
+                                 RoyalRoundedButton(
+                                   title:LaravelConfigurations.configurations?.getRegisterWord == null ?  "انشاء حساب" : LaravelConfigurations.configurations!.getRegisterWord!(),
+                                   color:RoyalColors.mainAppColor.withValues(alpha: 0.7),
+                                   onPressed:()=>authHandler.changeAuthScreen(AuthType.register),
+                                 ),
+                               ]
                            ],
                          );
                        }
@@ -102,34 +105,80 @@ class _AuthScreenState extends State<LaravelDefaultAuthScreen> {
                                   ):
                                  RoyalTextFormField(
                                    controller:model.controller,
-                                   title:model.name,
+                                   title:
+                                   model.column == "password"
+                                   ?
+                                   model.name.orBuilder(LaravelConfigurations.configurations?.getPasswordWord):
+
+                                   model.column == "password_confirmation"
+                                       ?
+                                   model.name.orBuilder(LaravelConfigurations.configurations?.getConfirmPasswordWord):
+
+                                   model.column == "name"
+                                       ?
+                                   model.name.orBuilder(LaravelConfigurations.configurations?.getNameWord):
+
+                                   model.name,
                                    inputType:model.numeric?TextInputType.phone:null,
                                    isPassword:model.isPassword,
                                  ),
                                )
                            ),
                            const SizedBox(height:15,),
-                           if(authType==AuthType.login)
-                             GestureDetector(
-                               onTap:()=>authHandler.changeAuthScreen(AuthType.forget),
-                               child: Text("هل نسيت كلمة السر ؟",style:TextStyle(
-                                 color:RoyalColors.mainAppColor,
-                                 fontWeight:FontWeight.bold
-                               ),),
-                             )
+                           if(
+                           authType==AuthType.login &&
+                             LaravelConfigurations.configurations?.forgetApiKeyWord != null
+                           )
+                            ...[
+                              GestureDetector(
+                                onTap:()=>authHandler.changeAuthScreen(AuthType.forget),
+                                child: Text(
+                                  LaravelConfigurations.configurations?.getForgetWord == null ?
+                                  "هل نسيت كلمة السر ؟" :
+                                  LaravelConfigurations.configurations!.getForgetWord!()
+                                  ,style:TextStyle(
+                                    color:RoyalColors.mainAppColor,
+                                    fontWeight:FontWeight.bold
+                                ),),
+                              ),
+                                const SizedBox(height:8,),
+                                GestureDetector(
+                                  onTap:()=>authHandler.changeAuthScreen(AuthType.register),
+                                  child: Text(
+                                    "انشاء حساب".orBuilder(LaravelConfigurations.configurations?.getRegisterWord)
+                                    ,style:const TextStyle(
+
+                                  ),),
+                                ),
+                            ]
                            else if(authType == AuthType.forget)
                              GestureDetector(
                                onTap:()=>authHandler.changeAuthScreen(AuthType.login),
-                               child: Text("تسجيل دخول",style:TextStyle(
+                               child: Text(
+                                 LaravelConfigurations.configurations?.getLoginWord == null ? "تسجيل دخول"
+                                     :LaravelConfigurations.configurations!.getLoginWord!()
+                       ,style:TextStyle(
                                    color:RoyalColors.mainAppColor,
                                    fontWeight:FontWeight.bold
                                ),),
                              )
-                           ,
+                           else if(authType == AuthType.register)
+                             ...[
+                               const SizedBox(height:8,),
+                               GestureDetector(
+                                 onTap:()=>authHandler.changeAuthScreen(AuthType.login),
+                                 child: Text(
+                                   "تسجيل دخول".orBuilder(LaravelConfigurations.configurations?.getLoginWord)
+                                   ,style:const TextStyle(
+
+                                 ),),
+                               ),
+                             ],
                            const SizedBox(height:25,),
               
                            RoyalRoundedButton(
-                             title: "تقدم",
+                             title:  LaravelConfigurations.configurations?.getForwardWord == null ? "تقدم"
+                                 :LaravelConfigurations.configurations!.getForwardWord!(),
                              onPressed:authHandler.callApi,
                            )
                          ]
@@ -171,7 +220,10 @@ class _PhoneTextEditorState extends State<PhoneTextEditor> {
       children: [
 
         RoyalPhoneTextFormField(
-            title:widget.model.name, controller:widget.model.controller
+            title:
+            LaravelConfigurations.configurations?.getPhoneWord == null ? widget.model.name
+                :LaravelConfigurations.configurations!.getPhoneWord!()
+            , controller:widget.model.controller
         ),
 
        if(widget.hideVerification==null || !widget.hideVerification!())
@@ -181,13 +233,14 @@ class _PhoneTextEditorState extends State<PhoneTextEditor> {
          builder:(BuildContext context,final t,_){
 
            if(widget.isNumberVerified()){
-             return  const Row(
+             return   Row(
                mainAxisAlignment:MainAxisAlignment.center,
                crossAxisAlignment:CrossAxisAlignment.center,
                children: [
-                 Icon(Icons.check_circle,color:RoyalColors.green,),
-                 SizedBox(width:5,),
-                 Text("تم التحقق")
+                const Icon(Icons.check_circle,color:RoyalColors.green,),
+                 const SizedBox(width:5,),
+                 Text( LaravelConfigurations.configurations?.getVerifiedWord == null ? "تم التحقق"
+                     :LaravelConfigurations.configurations!.getVerifiedWord!())
                ],
              );
            }
@@ -197,7 +250,8 @@ class _PhoneTextEditorState extends State<PhoneTextEditor> {
                  if(!widget.isNumberVerified())...[
 
                    const SizedBox(height:5,),
-                   const Text("يرجى توثيق رقم الهاتف"),
+                    Text(LaravelConfigurations.configurations?.getPleaseVerifyWord == null ?"يرجى توثيق رقم الهاتف":
+                    LaravelConfigurations.configurations!.getPleaseVerifyWord!()),
                    const SizedBox(height:10,),
                    Row(
                      mainAxisAlignment:MainAxisAlignment.spaceAround,
@@ -211,6 +265,14 @@ class _PhoneTextEditorState extends State<PhoneTextEditor> {
                            onPressed:(){
                              FunctionHelpers.jumpTo(context,
                               FbPhoneAuthScreen(
+                                title: "التحقق من رقم الهاتف".orBuilder(LaravelConfigurations
+                                .configurations?.getBySendSmsWord),
+                                  verificationSucceedMessage:  "تم التحقق بنجاح".orBuilder(LaravelConfigurations
+                                      .configurations?.getSuccessFullVerificationWord),
+                                  resendOtp: "اعادة ارسال رمز التحقق".orBuilder(LaravelConfigurations
+                                      .configurations?.getResendOtpWord),
+                                  pleaseInsertOtp:"يرجى ادخال رمز التحقق"
+                                  .orBuilder(LaravelConfigurations.configurations?.getPleaseInsertOtp),
                                   phoneNumber: phoneNumber,
                                   onVerificationSucceed:(v)async{
                                     await Future.delayed(const Duration(milliseconds:500));
@@ -219,7 +281,9 @@ class _PhoneTextEditorState extends State<PhoneTextEditor> {
                                   })
                              );
                            },
-                           child:const Text("عبر ارسال رسالة نصية"),
+                           child: Text(LaravelConfigurations.configurations?.getBySendSmsWord==null ? "عبر ارسال رسالة نصية"
+                             : LaravelConfigurations.configurations!.getBySendSmsWord!()
+                           ),
                          ),
 
 
@@ -232,6 +296,7 @@ class _PhoneTextEditorState extends State<PhoneTextEditor> {
 
                              FunctionHelpers.jumpTo(context,
                              LaravelWhatsAppGuard(
+
                                  phoneNumber: phoneNumber,
                                  onAuthenticated:_onPhoneVerificationCallback)
                              );
@@ -245,7 +310,10 @@ class _PhoneTextEditorState extends State<PhoneTextEditor> {
                              // )
                              // );
                            },
-                           child:const Text("عبر الواتساب"),
+                           child: Text(
+                               LaravelConfigurations.configurations?.getByWhatsAppWord==null ? "عبر الواتساب"
+                                   : LaravelConfigurations.configurations!.getByWhatsAppWord!()
+                           ),
                          ),
 
                      ],),
@@ -264,6 +332,8 @@ class _PhoneTextEditorState extends State<PhoneTextEditor> {
     setState(() {
       widget.model.verifiedNumber = phoneNumber;
     });
-    FunctionHelpers.toast("تم التحقق",status:true);
+    FunctionHelpers.toast(
+        LaravelConfigurations.configurations?.getVerifiedWord == null ? "تم التحقق" :
+        LaravelConfigurations.configurations!.getVerifiedWord!(),status:true);
   }
 }

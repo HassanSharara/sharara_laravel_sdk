@@ -3,7 +3,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:sharara_apps_building_helpers/http.dart';
 import 'package:sharara_apps_building_helpers/sharara_apps_building_helpers.dart';
 import 'package:sharara_apps_building_helpers/ui.dart';
 import 'package:sharara_laravel_sdk/http.dart';
@@ -13,13 +12,16 @@ class LaravelWhatsAppGuard extends StatefulWidget {
   const LaravelWhatsAppGuard({super.key,
     required this.phoneNumber,
     required this.onAuthenticated ,
-     this.title = "التحقق بواسطة الواتساب",
-     this.verifyOtpButton = "التحقق من رمز OTP",
-     this.resendOtp = "اعادة ارسال رمز التحقق",
   });
   final String phoneNumber;
   final Function(String) onAuthenticated;
-  final String title,verifyOtpButton,resendOtp;
+
+String get title => "التحقق بواسطة الواتساب" .orBuilder(LaravelConfigurations.configurations?.getByWhatsAppWord);
+String get verifyOtpButton => "التحقق من رمز OTP".orBuilder(LaravelConfigurations.configurations!.getVerifyOtpWord);
+String get resendOtp => "اعادة ارسال رمز التحقق".orBuilder(LaravelConfigurations.configurations!.getResendOtpWord);
+
+
+
   @override
   State<LaravelWhatsAppGuard> createState() => _LaravelWhatsAppGuardState();
 }
@@ -83,7 +85,10 @@ class _LaravelWhatsAppGuardState extends State<LaravelWhatsAppGuard> {
                    onPressed:(){
                      Navigator.maybePop(context);
                    },
-                   title: "تم التحقق بنجاح",
+                   title: "تم التحقق بنجاح".orBuilder(
+                     LaravelConfigurations
+                     .configurations?.getVerifiedWord
+                   ),
                  )
                ],
              );
@@ -101,7 +106,7 @@ class _LaravelWhatsAppGuardState extends State<LaravelWhatsAppGuard> {
 
                      return ElevatedButton(
                          onPressed:counter>0?null:_sendOtp,
-                         child: Text("اعادة ارسال رمز التحقق  ${counter>0?counter:""}"));
+                         child: Text("${widget.resendOtp}  ${counter>0?counter:""}"));
                    }
                ),
 
@@ -152,6 +157,13 @@ class _LaravelWhatsAppGuardState extends State<LaravelWhatsAppGuard> {
     if(data is Map && data.containsKey("secret")){
       _changeSecret(data['secret']);
       _changeCounter(15);
+      FunctionHelpers.successToast(
+          "تم ارسال رمز التحقق بنجاح"
+              .orBuilder(
+            LaravelConfigurations
+            .configurations?.getOtpSentSuccessfully
+          )
+      );
     }
   }
 
@@ -182,6 +194,13 @@ class _LaravelWhatsAppGuardState extends State<LaravelWhatsAppGuard> {
     final String token =  data['otp_token'];
     widget.onAuthenticated(token);
     _changeOtp(token);
+    FunctionHelpers.successToast(
+        "تم التحقق بنجاح"
+            .orBuilder(
+            LaravelConfigurations
+                .configurations?.getSuccessFullVerificationWord
+        )
+    );
   }
   
 

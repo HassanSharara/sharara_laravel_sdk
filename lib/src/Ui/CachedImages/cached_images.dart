@@ -35,7 +35,8 @@ class LaravelCachedImage extends StatelessWidget {
       ),
     ));
     if(imageUrl == null)return eWidget;
-    return CachedNetworkImage(
+    if(height == null || width == null ){
+      return CachedNetworkImage(
         key:UniqueKey(),
         imageUrl: imageUrl ,
         progressIndicatorBuilder:(BuildContext context,_,p){
@@ -57,16 +58,56 @@ class LaravelCachedImage extends StatelessWidget {
             width:width,
             height:height,
             decoration:BoxDecoration(
-              shape:shape,
-              borderRadius:shape==BoxShape.circle?null:borderRadius ?? BorderRadius.circular(radius??15),
-              image:DecorationImage(
-                image:provider,
-                fit:fit??BoxFit.fill
-              )
+                shape:shape,
+                borderRadius:shape==BoxShape.circle?null:borderRadius ?? BorderRadius.circular(radius??15),
+                image:DecorationImage(
+                    image:provider,
+                    fit:fit??BoxFit.fill
+                )
             ),
             child:child,
           );
         },
+      );
+    }
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: height! ,
+        maxWidth:width !,
+      ),
+      child:CachedNetworkImage(
+        key:UniqueKey(),
+        imageUrl: imageUrl ,
+        progressIndicatorBuilder:(BuildContext context,_,p){
+          return Center(
+            child: ConstrainedBox(
+              constraints:const BoxConstraints(
+                maxHeight:14,
+                maxWidth:20,
+              ),
+              child:const LinearProgressIndicator(),
+            ),
+          );
+        },
+        errorWidget:(_,__,___){
+          return eWidget;
+        },
+        imageBuilder:(BuildContext context,final ImageProvider provider){
+          return Container(
+            width:width,
+            height:height,
+            decoration:BoxDecoration(
+                shape:shape,
+                borderRadius:shape==BoxShape.circle?null:borderRadius ?? BorderRadius.circular(radius??15),
+                image:DecorationImage(
+                    image:provider,
+                    fit:fit??BoxFit.fill
+                )
+            ),
+            child:child,
+          );
+        },
+      ),
     );
   }
 }

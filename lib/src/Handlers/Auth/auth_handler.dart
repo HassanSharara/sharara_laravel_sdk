@@ -176,7 +176,8 @@ class AuthHandler {
     _confirmPasswordAuthModel,
   ];
 
-  static final AuthModel  _confirmPasswordAuthModel =  AuthModel("password_confirmation",name:"تأكيد كلمة السر",required:true,isPassword:true);
+  static final AuthModel  _confirmPasswordAuthModel
+  =  AuthModel("password_confirmation",name:"تأكيد كلمة السر",required:true,isPassword:true);
 
   static  List<AuthModel> defaultLoginModels = [
     PhoneAuthModel("phone",numeric:true,name: "رقم الهاتف",controller:PhoneTextEditController()),

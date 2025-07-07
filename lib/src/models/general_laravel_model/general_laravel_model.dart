@@ -62,6 +62,20 @@ abstract class GeneralLaravelModel<T> extends GeneralModelsJsonSerializer {
     }
     jsonParsedMap![mapEntry.key] = mapEntry.value;
   }
+
+  void generateListOf<T extends GeneralLaravelModel>(List<T>? models,final String key,
+       final T Function(dynamic) builder
+      ){
+    final dynamic data = get(key);
+    if(data is! List )return;
+    (models??=[]).clear();
+    for(final dynamic j in data){
+      final T? m = FunctionHelpers.tryCatch(()=>builder(j));
+      if( m == null)continue;
+      models.add(m);
+    }
+  }
+
   String? get modelImageUrl {
     for(final image in images){
       final String? url = image.url;
@@ -81,6 +95,12 @@ abstract class GeneralLaravelModel<T> extends GeneralModelsJsonSerializer {
       if(img==null)continue;
       this.images.add(img);
     }
+  }
+
+  R? buildPropertObject<R extends GeneralLaravelModel>(R Function(dynamic) builder,final dynamic key){
+    final dynamic data = get(key);
+    if(data is! Map)return null;
+    return FunctionHelpers.tryCatch(()=>builder(data));
   }
   buildTimestampObjects(){
     if(jsonParsedMap==null)return;
@@ -108,7 +128,7 @@ abstract class GeneralLaravelModel<T> extends GeneralModelsJsonSerializer {
   void operator>>(final GeneralLaravelModel? other){
     if(other==null)return;
     other.updateModelMapByKV(jsonParsedMap);
-    rebuildModel();
+    other.rebuildModel();
   }
 
 
@@ -117,4 +137,5 @@ abstract class GeneralLaravelModel<T> extends GeneralModelsJsonSerializer {
   }
 
 
+  bool get isValidApiModel => id !=null;
 }

@@ -14,10 +14,13 @@ class LaravelFiltersUiBuilder extends StatelessWidget {
   this.filteringLabel = "فلترة",
   this.cancelFiltersLabel = "الغاء الفلترة",
   this.searchLabel = "بحث",
-  this.searchByLabel = "سيكون البحث بواسطة"
+  this.back = "رجوع",
+  this.searchByLabel = "سيكون البحث بواسطة",
+    this.gridDelegate
   });
   final LaravelPaginationProvider provider;
-  final String filteringLabel,searchLabel,searchByLabel,cancelFiltersLabel;
+  final String filteringLabel,searchLabel,back,searchByLabel,cancelFiltersLabel;
+  final SliverGridDelegate? gridDelegate;
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -26,24 +29,21 @@ class LaravelFiltersUiBuilder extends StatelessWidget {
         padding:const EdgeInsets.symmetric(vertical:12,horizontal:8),
         children: [
           LaravelSearchByWidget(provider: provider,searchByLabel:searchByLabel,),
-          RestFilters(provider:provider,),
+          RestFilters(provider:provider,gridDelegate:gridDelegate,),
           ElevatedButton(
               style: ButtonStyle(
-                shadowColor:MaterialStateColor.resolveWith((states) =>
-                 RoyalColors.mainAppColor
-                )
-              ),
+                shadowColor:WidgetStateColor.resolveWith((_)=>RoyalColors.mainAppColor)
+                ),
               onPressed:()async{
                  Navigator.maybePop(context);
                  await Future.delayed(const Duration(milliseconds:150));
                  await provider.filteringByPF();
                 }, child:Text(filteringLabel)
           ),
-
           ElevatedButton(
               style:ButtonStyle(
-                foregroundColor:MaterialStateColor.resolveWith((states) =>
-                 RoyalColors.red
+                foregroundColor:WidgetStateColor.resolveWith((_) =>
+                 RoyalColors.greyFaintColor
                 )
               ),
               onPressed:()async {
@@ -51,7 +51,11 @@ class LaravelFiltersUiBuilder extends StatelessWidget {
               await Future.delayed(const Duration(milliseconds:150));
               provider.cancelAllFilters();
               },
-              child: Text(cancelFiltersLabel))
+              child: Text(cancelFiltersLabel)),
+          const SizedBox(height:10,),
+
+          TextButton(onPressed: ()=>Navigator.pop(context), child: Text(back)),
+          const SizedBox(height:10,),
         ],
       ),
     );
@@ -60,9 +64,11 @@ class LaravelFiltersUiBuilder extends StatelessWidget {
 
 class RestFilters extends StatefulWidget {
   const RestFilters({super.key,
-  required this.provider
+  required this.provider,
+    this.gridDelegate
   });
   final LaravelPaginationProvider provider;
+  final SliverGridDelegate? gridDelegate;
   @override
   State<RestFilters> createState() => _RestFiltersState();
 }
@@ -74,37 +80,41 @@ class _RestFiltersState extends State<RestFilters> {
   }
   @override
   Widget build(BuildContext context) {
-    return
-      GridView.extent(
-        shrinkWrap:true,
+
+    return GridView.builder(
         primary:false,
-        maxCrossAxisExtent:200,
-        children: [
-          for(final filter in widget.provider.filters)
-            Align(
-              child: InkWell(
-                onTap:()=>setState(() {
-                  filter.active = !filter.active;
-                }),
-                borderRadius:BorderRadius.circular(15),
-                child: RoyalShadowContainer(
-                  backgroundColor:filter.active?RoyalColors.mainAppColor:null,
-                  height:45,
-                  margin:const EdgeInsets.symmetric(horizontal:8,vertical:8),
-                  child:Center(
-                    child: Text(
-                      filter.name,
-                      textAlign:TextAlign.center,
-                      style:TextStyle(
-                        color:filter.active?RoyalColors.white:null
-                      ),
-                    ),
+        shrinkWrap:true,
+        gridDelegate: widget.gridDelegate ?? const
+         SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 200,
+          childAspectRatio: 3
+         )
+        ,
+        itemCount:widget.provider.filters.length,
+        itemBuilder: (context,final int index){
+        final filter = widget.provider.filters[index];
+        return     Align(
+          child: InkWell(
+            onTap:()=>setState(() {
+              filter.active = !filter.active;
+            }),
+            borderRadius:BorderRadius.circular(15),
+            child: RoyalShadowContainer(
+              backgroundColor:filter.active?RoyalColors.mainAppColor:null,
+              height:45,
+              margin:const EdgeInsets.symmetric(horizontal:8,vertical:8),
+              child:Center(
+                child: Text(
+                  filter.name,
+                  textAlign:TextAlign.center,
+                  style:TextStyle(
+                      color:filter.active?RoyalColors.white:null
                   ),
                 ),
               ),
-            )
-        ],
-      );
+            ),
+          ),
+        );
+        });
   }
 }
 
