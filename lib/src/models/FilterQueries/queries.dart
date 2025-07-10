@@ -5,14 +5,15 @@ class LaravelFilter {
   final String name;
   final LaravelQueryBuilder query;
  bool active;
- LaravelFilter({required this.name,required this.query,this.active = false});
+ LaravelFilter({required this.name,this.active = false,final LaravelQueryBuilder? query}):
+       query = query ?? LaravelQueryBuilder.create;
 }
 class LaravelSearchFilter {
-  final TextEditingController controller = TextEditingController();
   TextInputType type;
   LaravelFilter filter;
   final String column;
   final Function(String)? onValueSearched;
+  final TextEditingController controller = TextEditingController();
   LaravelSearchFilter({
     required this.column,
     required this.filter,

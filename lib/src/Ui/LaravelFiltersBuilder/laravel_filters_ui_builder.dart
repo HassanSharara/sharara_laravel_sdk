@@ -29,7 +29,9 @@ class LaravelFiltersUiBuilder extends StatelessWidget {
         padding:const EdgeInsets.symmetric(vertical:12,horizontal:8),
         children: [
           LaravelSearchByWidget(provider: provider,searchByLabel:searchByLabel,),
+          const SizedBox(height: 10,),
           RestFilters(provider:provider,gridDelegate:gridDelegate,),
+          const SizedBox(height:20,),
           ElevatedButton(
               style: ButtonStyle(
                 shadowColor:WidgetStateColor.resolveWith((_)=>RoyalColors.mainAppColor)

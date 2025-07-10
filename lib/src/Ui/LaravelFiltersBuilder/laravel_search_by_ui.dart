@@ -1,7 +1,6 @@
 
 
 import 'package:flutter/material.dart';
-import 'package:sharara_apps_building_helpers/ui.dart';
 import 'package:sharara_laravel_sdk/sharara_laravel_sdk.dart';
 
 class LaravelSearchByWidget extends StatefulWidget {
@@ -49,7 +48,7 @@ class _LaravelSearchByWidgetState extends State<LaravelSearchByWidget> {
                         borderRadius:BorderRadius.circular(15),
                         child: Padding(
                           padding:const EdgeInsets.symmetric(horizontal:8,vertical:4),
-                          child: Icon(Icons.clear,color:RoyalColors.getBodyColor(context).withOpacity(0.18)),
+                          child: Icon(Icons.clear,color:RoyalColors.getBodyColor(context).withValues(alpha: 0.18)),
                         ),
                       ),
                       InkWell(
@@ -81,7 +80,7 @@ class _LaravelSearchByWidgetState extends State<LaravelSearchByWidget> {
                           child: Icon(Icons.search,
                             color:
                             activeFilter.controller.text.isEmpty?
-                                RoyalColors.mainAppColor.withOpacity(0.2):
+                                RoyalColors.mainAppColor.withValues(alpha: 0.2):
                             RoyalColors.mainAppColor,),
                         ),
                       ),
