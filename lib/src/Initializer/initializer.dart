@@ -87,7 +87,9 @@ extension StringOrBuilder on String {
 class LaravelSDKInitializer {
 
   static initialize(
-      {final List<String> withBoxesNames = const [],
+      {
+      final List<String> withBoxesNames = const [],
+      final List<String> lazyBoxesNames = const [],
       final LaravelConfigurations Function()? configurations
       }
       )async{
@@ -97,7 +99,8 @@ class LaravelSDKInitializer {
         ...withBoxesNames
       ],
       lazyBoxesNames:[
-        ...Constants.boxes
+        ...Constants.boxes,
+        ...lazyBoxesNames
       ]
     );
    if(configurations!=null)LaravelConfigurations.configurations = configurations();

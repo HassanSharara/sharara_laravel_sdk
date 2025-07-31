@@ -1,6 +1,6 @@
 name: sharara_laravel_sdk
-version: 1.0.8
-description: "A new sharara package to make developing more easy and efficient."
+version: 1.0.9
+description: "A new sharara package to make developing more easy and efficient. "
 homepage: https://github.com/HassanSharara
 repository: https://github.com/HassanSharara/sharara_laravel_sdk
 environment:
