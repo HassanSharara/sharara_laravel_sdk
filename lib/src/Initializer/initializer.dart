@@ -86,7 +86,7 @@ extension StringOrBuilder on String {
 
 class LaravelSDKInitializer {
 
-  static initialize(
+  static Future<void> initialize(
       {
       final List<String> withBoxesNames = const [],
       final List<String> lazyBoxesNames = const [],
