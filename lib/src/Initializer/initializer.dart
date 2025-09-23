@@ -90,7 +90,8 @@ class LaravelSDKInitializer {
       {
       final List<String> withBoxesNames = const [],
       final List<String> lazyBoxesNames = const [],
-      final LaravelConfigurations Function()? configurations
+      final LaravelConfigurations Function()? configurations,
+        final bool withHive = false,
       }
       )async{
     await ShararaAppHelperInitializer.initialize(
@@ -101,7 +102,8 @@ class LaravelSDKInitializer {
       lazyBoxesNames:[
         ...Constants.boxes,
         ...lazyBoxesNames
-      ]
+      ],
+      withHiveFlutter:withHive
     );
    if(configurations!=null)LaravelConfigurations.configurations = configurations();
    AuthProvider.instance.init();
