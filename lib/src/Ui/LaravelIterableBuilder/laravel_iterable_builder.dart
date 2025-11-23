@@ -62,7 +62,7 @@ class _LaravelIterableBuilderState<T extends GeneralLaravelModel> extends State<
 
   @override
   void initState() {
-    if(widget.autoInit)widget.provider.init();
+    if(widget.autoInit && widget.provider.notifier.value == null )widget.provider.init();
     if ( widget.showLoadMoreOnTheEndOfItemBuilder != null ){
       widget.provider.showLoadMoreOnTheEndOfItemBuilder = widget.showLoadMoreOnTheEndOfItemBuilder!;
     }

@@ -11,9 +11,7 @@ class RTime {
         dateTime = DateTime.parse(json[columnName].toString());
       }
       catch(_){}
-
       if(dateTime!=null){
-        dateTime=dateTime!.add(const Duration(hours:3));
         timeOfDay=TimeOfDay.fromDateTime(dateTime!);
       }
     }
