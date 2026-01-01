@@ -22,8 +22,8 @@ class LaravelLoadingFrameBuilder extends StatelessWidget {
         if(showLoading)
         ValueListenableBuilder(valueListenable: provider.loading,
             child:const SizedBox(),
-            builder:(BuildContext context,final bool isLoading,_){
-             if(!isLoading)return _!;
+            builder:(BuildContext context,final bool isLoading,c){
+             if(!isLoading)return c!;
              return  Align(
                alignment:const Alignment(0,0.95),
                child: SizedBox(

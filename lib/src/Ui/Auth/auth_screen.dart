@@ -26,8 +26,8 @@ class _AuthScreenState extends State<LaravelDefaultAuthScreen> {
     final Size size = MediaQuery.of(context).size;
     return PopScope(
       canPop:false,
-      onPopInvokedWithResult:(_,__)async{
-        if(_)return;
+      onPopInvokedWithResult:(c,__)async{
+        if(c)return;
         if(authHandler.screenAuthType.value!=null){
           if(authHandler.screenAuthType.value==AuthType.forget){
             authHandler.changeAuthScreen(AuthType.login);
@@ -230,7 +230,7 @@ class _PhoneTextEditorState extends State<PhoneTextEditor> {
        ValueListenableBuilder(
          valueListenable:widget.model.controller,
          child:const SizedBox(),
-         builder:(BuildContext context,final t,_){
+         builder:(BuildContext context,final t,c){
 
            if(widget.isNumberVerified()){
              return   Row(
@@ -244,7 +244,7 @@ class _PhoneTextEditorState extends State<PhoneTextEditor> {
                ],
              );
            }
-           if(t.text.isEmpty)return _!;
+           if(t.text.isEmpty)return c!;
            return Column(
                children:[
                  if(!widget.isNumberVerified())...[

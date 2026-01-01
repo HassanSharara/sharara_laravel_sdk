@@ -16,8 +16,8 @@ class UserAuthorBuilder<U extends AuthUser> extends StatelessWidget {
     return ValueListenableBuilder<U?>(
         valueListenable: provider.userNotifier,
         child:authScreen??const SizedBox(),
-        builder: (BuildContext context,final U? u,_){
-          if(u==null)return _!;
+        builder: (BuildContext context,final U? u,c){
+          if(u==null)return c!;
           return builder(context,u);
         });
   }
