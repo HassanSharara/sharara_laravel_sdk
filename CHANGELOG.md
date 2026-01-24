@@ -1,3 +1,5 @@
+## 1.1.3
+- updating sharara_apps_building_helpers version
 ## 1.1.1
 - updating sharara_apps_building_helpers package version
 ## 1.0.2 
