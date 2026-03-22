@@ -428,10 +428,10 @@ packages:
     dependency: transitive
     description:
       name: sharara_apps_building_helpers
-      sha256: caecdc393cd081b02602337ee7755ce51ef90e9482cc42fed9a7d7f06aff7a89
+      sha256: a710e03e0c06d769ed4d9404cf439d8d836e06806b214fd16ec729e1fefee0af
       url: "https://pub.dev"
     source: hosted
-    version: "2.2.3"
+    version: "2.2.4"
   sharara_laravel_sdk:
     dependency: "direct main"
     description:
